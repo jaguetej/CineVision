@@ -1,0 +1,21 @@
+# Maven build output
+**/target/
+
+# Node / React build output
+**/node_modules/
+frontend/build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
