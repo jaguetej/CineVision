@@ -195,4 +195,4 @@ https://user-images.githubusercontent.com/79381882/194945895-f7e2d2d2-4899-4ade-
 
 <img src="homa_page.jpg">
 
-[For more UI Images](https://github.com/VonHumbolt/CineVisionMicroserviceProject/tree/main/frontend)
+[For more UI Images]
