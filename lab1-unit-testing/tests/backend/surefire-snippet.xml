@@ -1,0 +1,17 @@
+<!--
+  Snippet a insertar en movieService/pom.xml dentro de <build><plugins>...</plugins></build>
+  si no existe ya el surefire-plugin. Forzamos versión 3.0.0+ para soportar JUnit 5.
+-->
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>3.0.0</version>
+  <configuration>
+    <useModulePath>false</useModulePath>
+    <includes>
+      <include>**/*Test.java</include>
+      <include>**/*Tests.java</include>
+    </includes>
+    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+  </configuration>
+</plugin>

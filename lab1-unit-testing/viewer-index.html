@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lab 1 · Unit Testing · CineVision — Resultados</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #0e1117;
+      --bg2: #161b22;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --pass: #3fb950;
+      --fail: #f85149;
+      --border: #30363d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+    }
+    header {
+      background: linear-gradient(180deg, #1f6feb 0%, #0d419d 100%);
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    header .sub { color: #c8d1da; font-size: 13px; margin-top: 4px; }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 32px 80px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .card a { color: var(--accent); text-decoration: none; }
+    .card a:hover { text-decoration: underline; }
+    .card ul { margin: 0; padding-left: 18px; }
+    #report {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px 32px;
+    }
+    #report h1 { font-size: 24px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    #report h2 { font-size: 18px; margin-top: 28px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    #report h3 { font-size: 15px; color: var(--muted); }
+    #report table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    #report th, #report td { border: 1px solid var(--border); padding: 6px 10px; font-size: 13px; text-align: left; }
+    #report th { background: #21262d; }
+    #report code { background: #21262d; padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+    #report pre { background: #0b0e13; padding: 12px; border-radius: 6px; overflow-x: auto; border: 1px solid var(--border); }
+    .pass { color: var(--pass); font-weight: 600; }
+    .fail { color: var(--fail); font-weight: 600; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge.ok { background: rgba(63, 185, 80, .15); color: var(--pass); border: 1px solid var(--pass); }
+    .badge.ko { background: rgba(248, 81, 73, .15); color: var(--fail); border: 1px solid var(--fail); }
+    footer { color: var(--muted); font-size: 12px; margin-top: 40px; text-align: center; }
+    .empty { color: var(--muted); font-style: italic; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Lab 1 · Unit Testing · CineVision</h1>
+  <div class="sub">Resultados de ejecución de los tres tiers (DB · BE · FE). Servido por el contenedor <code>lab1-report-viewer</code>.</div>
+</header>
+<main>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Artefactos crudos</h3>
+      <ul>
+        <li><a href="db.log">db.log</a> — salida completa de los tests SQL</li>
+        <li><a href="be.log">be.log</a> — salida completa de Maven Surefire</li>
+        <li><a href="fe.log">fe.log</a> — salida completa de Jest</li>
+        <li><a href="fe-junit.xml">fe-junit.xml</a> — JUnit XML del frontend</li>
+        <li><a href="test-report.md">test-report.md</a> — reporte estructurado (markdown)</li>
+        <li><a href="exit-codes.json">exit-codes.json</a> — códigos de salida por tier</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Atajos</h3>
+      <ul>
+        <li><a href="/">Listado completo</a> del directorio <code>.reports/</code></li>
+        <li><a href="https://docs.docker.com/compose/" target="_blank">Docs Docker Compose</a></li>
+        <li>Recarga esta página tras volver a correr los tests.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="report">
+    <p class="empty">Cargando test-report.md…</p>
+  </div>
+
+  <footer>
+    Generado automáticamente por <code>lab1-unit-testing/run-all.sh</code> · CineVision · Software Quality 2026-I
+  </footer>
+</main>
+
+<script>
+  fetch('test-report.md?cache=' + Date.now())
+    .then(r => r.ok ? r.text() : Promise.reject('no md'))
+    .then(md => {
+      // Resalta PASS/FAIL en celdas de tabla y banderas
+      const html = marked.parse(md, { gfm: true, breaks: false });
+      const colored = html
+        .replace(/(\bPASS\b)/g, '<span class="pass">$1</span>')
+        .replace(/(\bFAIL[OÓ]?\b)/g, '<span class="fail">$1</span>')
+        .replace(/LISTO PARA PRESENTACIÓN/g, 'LISTO PARA PRESENTACIÓN <span class="badge ok">OK</span>')
+        .replace(/REVISAR FALLAS/g, 'REVISAR FALLAS <span class="badge ko">FAIL</span>');
+      document.getElementById('report').innerHTML = colored;
+    })
+    .catch(() => {
+      document.getElementById('report').innerHTML =
+        '<p class="empty">No encontré <code>test-report.md</code> todavía. Espera a que la corrida termine y refresca.</p>';
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+version: "3.9"
+
+# Orquestación dedicada SOLO a tests unitarios — Extended Laboratory 1.
+# No se mezcla con el docker-compose.yml de producción.
+#
+# Uso:
+#   mkdir -p .reports
+#   docker compose -f docker-compose.tests.yml build
+#   docker compose -f docker-compose.tests.yml up --abort-on-container-exit movie-db-tests-postgres movie-db-tests
+#   docker compose -f docker-compose.tests.yml up --abort-on-container-exit movie-be-tests
+#   docker compose -f docker-compose.tests.yml up --abort-on-container-exit movie-fe-tests
+#   docker compose -f docker-compose.tests.yml down -v
+
+networks:
+  lab1net:
+    driver: bridge
+
+services:
+
+  # --------- TIER 1: BASE DE DATOS ----------
+  movie-db-tests-postgres:
+    image: postgres:15
+    container_name: lab1-movie-db
+    environment:
+      POSTGRES_DB: cine_vision_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: testpass
+    volumes:
+      - ./sq-tests/db/init-test-schema.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cine_vision_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    networks:
+      - lab1net
+
+  movie-db-tests:
+    image: postgres:15
+    container_name: lab1-movie-db-tests
+    tty: true
+    depends_on:
+      movie-db-tests-postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: testpass
+      PGHOST: movie-db-tests-postgres
+      PGUSER: postgres
+      PGDATABASE: cine_vision_test
+      DEMO_PACE: ${DEMO_PACE:-0}        # exporta DEMO_PACE=0.6 para ralentizar a 0.6s por test
+      FORCE_COLOR: "1"
+      TERM: xterm-256color
+    volumes:
+      - ./sq-tests/db:/tests:ro
+      - ./.reports:/reports
+    entrypoint:
+      - bash
+      - -lc
+      - "bash /tests/run-tests.sh | tee /reports/db.log; exit $${PIPESTATUS[0]}"
+    networks:
+      - lab1net
+
+  # --------- TIER 2: BACKEND (movieService) ----------
+  movie-be-tests:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: lab1-movie-be-tests
+    tty: true
+    working_dir: /work
+    environment:
+      MAVEN_OPTS: "-Dstyle.color=always -Djansi.force=true"
+      TERM: xterm-256color
+    volumes:
+      - .:/work
+      - maven-cache:/root/.m2
+    command:
+      - bash
+      - -lc
+      - "mvn -pl movieService -am -DskipITs -DfailIfNoTests=false -Dsurefire.useFile=false test | tee /work/.reports/be.log; exit $${PIPESTATUS[0]}"
+
+  # --------- TIER 3: FRONTEND ----------
+  movie-fe-tests:
+    image: node:18-alpine
+    container_name: lab1-movie-fe-tests
+    tty: true
+    working_dir: /app
+    environment:
+      CI: "true"
+      FORCE_COLOR: "1"
+      TERM: xterm-256color
+      JEST_JUNIT_OUTPUT_DIR: /app
+      JEST_JUNIT_OUTPUT_NAME: junit.xml
+    volumes:
+      - ./frontend:/app
+      - ./.reports:/reports
+      - npm-cache:/root/.npm
+    command:
+      - sh
+      - -lc
+      - |
+        set -e
+        apk add --no-cache bash > /dev/null 2>&1 || true
+        npm ci --include=dev
+        npm install --no-save jest-junit
+        # --verbose lista cada test individual con check verde / cruz roja en tiempo real.
+        npx react-scripts test --watchAll=false --ci --verbose \
+          --reporters=default \
+          --reporters=jest-junit \
+          | tee /reports/fe.log
+        cp /app/junit.xml /reports/fe-junit.xml || true
+
+  # --------- VIEWER HTTP para resultados (opcional, levanta tras los tests) ----------
+  report-viewer:
+    image: nginx:alpine
+    container_name: lab1-report-viewer
+    ports:
+      - "8088:80"
+    volumes:
+      - ./.reports:/usr/share/nginx/html:ro
+      - ./sq-tests/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+volumes:
+  maven-cache:
+  npm-cache:
